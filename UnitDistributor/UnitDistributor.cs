@@ -19,8 +19,11 @@ namespace UnitDistributor
         private CoreTypeL coreType = CoreTypeL.Stair;
         private double maxAptDepth = 0;
 
+        private List<int> targetUnitAreas = new List<int>();
         private List<CornerRail> corners = new List<CornerRail>();
         private List<EdgeRail> edges = new List<EdgeRail>();
+
+        private Queue<ApartBlock> blockQueue = new Queue<ApartBlock>();
 
 
         //constructor
@@ -39,15 +42,36 @@ namespace UnitDistributor
 
         public void Distribute()
         {
-            InitializeRails(); 
-            PlaceCornerBlock();
-            PlaceEdgeBlock();
-            TryTwoUnitCornerBlock();
+            DetectAptLineTopology();
+            AddEntryBlockOnEdge();
+            PlaceAtThreeUnitCorner();
+            DistributeAgain();
+            OptimizeCoverage();
+            OptimizeEntry();
         }
 
 
         //sub
-        private void InitializeRails()
+        private void SetInitialUnitQueue()
+        {
+            //add All rail length.
+            double railLengthSum = 0;
+
+            foreach (Line i in aptLines)
+                railLengthSum += i.Length;
+
+            
+            //caculate length ratio by Area
+            List<double> allocatedLengthPerArea = new List<double>();
+
+
+            //caculate max unit count
+
+            
+            //enqueue
+        }
+
+        private void DetectAptLineTopology()
         {
             List<Point3d> vertices = new List<Point3d>();
             List<CornerRail> cornerCandidates = new List<CornerRail>();
@@ -103,7 +127,13 @@ namespace UnitDistributor
             
         }
 
-        private void PlaceCornerBlock()
+        private void AddEntryBlockOnEdge()
+        {
+
+        }
+
+        
+        private void PlaceAtThreeUnitCorner()
         {
             if (corners.Count == 0)
                 return;
@@ -111,23 +141,31 @@ namespace UnitDistributor
             foreach(CornerRail i in corners)
             {
                 if (i.LinkedEdges.Count > 3)
-                    TreatMultiLinkCorner(); //??
-
+                    continue;
+          
 
             }
         }
 
-        private void PlaceEdgeBlock()
+        private void DistributeAgain()
         {
+            RemoveSurplusEntry();
+            PlaceAtTwoUnitCorner();
         }
 
-        private void TryTwoUnitCornerBlock()
-        {
-
-        }
-
-        private void TreatMultiLinkCorner()
+        private void OptimizeCoverage()
         { }
+
+        private void OptimizeEntry()
+        { }
+
+        private void RemoveSurplusEntry()
+        {
+        }
+
+        private void PlaceAtTwoUnitCorner()
+        {
+        }
 
     }
 
@@ -138,7 +176,7 @@ namespace UnitDistributor
     class CornerRail
     {
         //fields
-        private List<ApartBlock> blocks = new List<ApartBlock>();
+        private List<IApartBlock> blocks = new List<IApartBlock>();
         private List<EdgeRail> linkedEdges = new List<EdgeRail>();
         private List<Vector3d> linkDirections = new List<Vector3d>();
         private List<Line> linkDirectionLines = new List<Line>();
@@ -191,12 +229,11 @@ namespace UnitDistributor
     class EdgeRail
     {
         //fields
-        private List<ApartBlock> blocks = new List<ApartBlock>();
+        private List<IApartBlock> blocks = new List<IApartBlock>();
         private List<CornerRail> linkedCorners = new List<CornerRail>();
         private Point3d midPt = new Point3d();
         private Line baseLine = new Line();
         private Line edgeLine = new Line();
-
 
         //constructor
         public EdgeRail()
@@ -206,7 +243,7 @@ namespace UnitDistributor
         {
             this.baseLine = edgeLine;
             this.edgeLine = baseLine;
-            this.midPt = (edgeLine.From + edgeLine.To);
+            this.midPt = (edgeLine.From + edgeLine.To)*0.5;
         }
 
 
@@ -231,24 +268,33 @@ namespace UnitDistributor
     }
 
 
-    class ApartBlock
+    //Block
+    interface IApartBlock
     {
+        double ALength { get; }
+        double ADepth { get; }
+        double PLength { get; }
+        double PDepth { get; }
+    }
+
+    class ApartBlock: IApartBlock
+    { 
         private List<ApartUnit> units = new List<ApartUnit>();
 
         //constructor
         public ApartBlock()
-        {
-
+        { 
         }
 
-        public ApartBlock(List<ApartUnit> units)
+        public ApartBlock(string blockID)
         {
-            this.units = units;
+ 
+
         }
 
 
         //method
-        private void RenewLink()
+        private void RenewConnectionPt()
         { }
 
         public void AddUnit(ApartUnit unit)
@@ -276,7 +322,7 @@ namespace UnitDistributor
 
                 foreach (ApartUnit i in units)
                 {
-                    
+                   
                 }
 
                 return 0;
@@ -327,12 +373,38 @@ namespace UnitDistributor
                 return 0;
             }
         }
+
+        public bool IsFlip
+        {
+            get
+            {
+                return false;
+            }
+        }
     }
 
+    class EntryBlock: IApartBlock
+    {
+        private double aLength = 0;
+        private double aDepth = 0;
+        private double pLength = 0;
+        private double pDepth = 0;
+
+        public double ALength { get { return ALength; } }
+        public double ADepth { get { return ADepth; } }
+        public double PLength { get { return pLength; } }
+        public double PDepth { get { return pDepth; }}
+    }
+
+
+    //Unit
+    /// Unit code: {Area,Bay,Core,Deribed,Edge,Form,Ao,Po,Ai,Pi}
+    /// ex) {74,3,S,0,E,0,10800,0,8000,0} => 74m2, 3bay, 계단형 0번 코어, 엣지타입 0번 유닛, Ao:10800, Ai: 0, Po: 8000, Pi: 0
 
     class ApartUnit
     {
         //fields
+        private string unitID = "";
         private Point3d origin = new Point3d();
         private List<Point3d> connectionPts = new List<Point3d>();
         private Polyline outline = new Polyline();
@@ -343,7 +415,6 @@ namespace UnitDistributor
         private double perpO = 0;
         private double perpI = 0;
 
-        CoreTypeL coreType = CoreTypeL.Stair;
         private bool isFlip = false;
 
            
@@ -351,9 +422,22 @@ namespace UnitDistributor
         public ApartUnit()
         {}
 
-        public ApartUnit(CoreTypeL coreType, double alignO, double alignI, double perpO, double perpI)
+        public ApartUnit(string unitID, Point3d origin, bool flip)
         {
-            this.coreType = coreType;
+            this.unitID = unitID;
+            string[] splitCodes = unitID.Split(',');
+            this.alignO = int.Parse(splitCodes[6]);
+            this.alignI = int.Parse(splitCodes[7]);
+            this.perpO = int.Parse(splitCodes[8]);
+            this.perpI = int.Parse(splitCodes[9]);
+
+            if (flip)
+                Flip();
+        }
+
+        public ApartUnit(string unitID, double alignO, double alignI, double perpO, double perpI)
+        {
+            this.unitID = unitID;
             this.alignO = alignO;
             this.alignI = alignI;
             this.perpO = perpO;
@@ -398,11 +482,11 @@ namespace UnitDistributor
         public double PerpI { get { return perpI; } private set { perpI = value; } }
 
         public Point3d Origin { get { return origin; } private set { origin = value; } }
+        public bool IsFlip { get { return isFlip; } }
 
 
         //properties - type
-        public CoreTypeL CoreType { get { return coreType; } }
-        public bool IsFlip { get { return isFlip; } }
+        public string ID { get { return unitID; } }
 
         
     }
@@ -410,48 +494,11 @@ namespace UnitDistributor
     public enum CoreTypeL { Stair, Corridor, Tower }
     #endregion DataStructure
 
+
     #region TempDB
-    class UnitDatabase
+    class UnitSearcher
     {
-        private static List<ApartUnit> units = new List<ApartUnit>();
-        private static List<ApartBlock> blocks = new List<ApartBlock>();
-        private static List<ApartBlock> selectedBlocks = new List<ApartBlock>();
-
-        //method
-        public static List<ApartBlock> GetBlocksByCoreType(string coreType)
-        {
-            return new List<ApartBlock>();
-        }
-
-        public static List<ApartBlock> GetBlocksByArea(double area)
-        {
-            return new List<ApartBlock>();
-        }
-
-        public static List<ApartBlock> GetBlocksByCoreAndArea(string coreType, double area)
-        {
-            return new List<ApartBlock>();
-        }
-
-        public static List<ApartUnit> GetUnitsByCoreType(string coreType)
-        {
-            return new List<ApartUnit>();
-        }
-
-        public static List<ApartUnit> GetUnitsByArea(double area)
-        {
-            return new List<ApartUnit>();
-        }
-
-        public static List<ApartUnit> GetUnitsByCoreAndArea(string coreType, double area)
-        {
-            return new List<ApartUnit>();
-        }
-
-        //properties
-        public static List<ApartUnit> AllUnits { get { return units; } }
-        public static List<ApartBlock> AllBlocks { get { return blocks; } }
-        public static List<ApartBlock> SelectedBlocks { get { return selectedBlocks; } }
-     }
+       
+    }
     #endregion
 }
