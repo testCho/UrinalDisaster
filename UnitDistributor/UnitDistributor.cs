@@ -19,7 +19,6 @@ namespace UnitDistributor
         private CoreTypeL coreType = CoreTypeL.Stair;
         private double maxAptDepth = 0;
 
-        private List<int> targetUnitAreas = new List<int>();
         private List<CornerRail> corners = new List<CornerRail>();
         private List<EdgeRail> edges = new List<EdgeRail>();
 
@@ -42,36 +41,29 @@ namespace UnitDistributor
 
         public void Distribute()
         {
-            DetectAptLineTopology();
-            AddEntryBlockOnEdge();
-            PlaceAtThreeUnitCorner();
-            DistributeAgain();
-            OptimizeCoverage();
+            SetAptLineTopology();
+            PlaceEntryOnEdge();
+            SetInitialUnitQueue();
+            PlaceThreeUnitCorner();
+            PlaceEdgeBlock();
+
+            //결과 체크
+            ExhangeCornerToTwoUnit();
+
+            //베이 무시 옵션 체크
+            if (true)
+                ExchangeBay();
+
+            //면적 무시 옵션 체크
+            if (true)
+                ExchangeArea();
+
             OptimizeEntry();
         }
 
 
         //sub
-        private void SetInitialUnitQueue()
-        {
-            //add All rail length.
-            double railLengthSum = 0;
-
-            foreach (Line i in aptLines)
-                railLengthSum += i.Length;
-
-            
-            //caculate length ratio by Area
-            List<double> allocatedLengthPerArea = new List<double>();
-
-
-            //caculate max unit count
-
-            
-            //enqueue
-        }
-
-        private void DetectAptLineTopology()
+        private void SetAptLineTopology()
         {
             List<Point3d> vertices = new List<Point3d>();
             List<CornerRail> cornerCandidates = new List<CornerRail>();
@@ -127,13 +119,30 @@ namespace UnitDistributor
             
         }
 
-        private void AddEntryBlockOnEdge()
+        private void PlaceEntryOnEdge()
         {
 
         }
 
-        
-        private void PlaceAtThreeUnitCorner()
+        private void SetInitialUnitQueue()
+        {
+            //add All rail length.
+            double edgeLengthSum = 0;
+
+            foreach (EdgeRail i in edges)
+                edgeLengthSum += i.LeftLength;
+
+
+            //caculate length ratio by Area
+            List<double> allocatedLengthPerArea = new List<double>();
+
+
+            //caculate max unit count
+
+            //enqueue
+        }
+
+        private void PlaceThreeUnitCorner()
         {
             if (corners.Count == 0)
                 return;
@@ -147,26 +156,20 @@ namespace UnitDistributor
             }
         }
 
-        private void DistributeAgain()
-        {
-            RemoveSurplusEntry();
-            PlaceAtTwoUnitCorner();
-        }
+        private void PlaceEdgeBlock()
+        { }
 
-        private void OptimizeCoverage()
+        private void ExhangeCornerToTwoUnit()
+        { }
+
+        private void ExchangeBay()
+        { }
+
+        private void ExchangeArea()
         { }
 
         private void OptimizeEntry()
         { }
-
-        private void RemoveSurplusEntry()
-        {
-        }
-
-        private void PlaceAtTwoUnitCorner()
-        {
-        }
-
     }
 
 
@@ -381,7 +384,6 @@ namespace UnitDistributor
                 return false;
             }
 
-            if()
         }
     }
 
@@ -498,9 +500,27 @@ namespace UnitDistributor
 
 
     #region TempDB
-    class UnitSearcher
+    public sealed class BlockSetting
     {
-       
+        //field
+        private List<string> selectedBlocks = new List<string>();
+
+        //constructor - singleton
+        private static readonly BlockSetting instance = new BlockSetting();
+
+        static BlockSetting()
+        { }
+
+        private BlockSetting()
+        { }
+
+  
+        public static BlockSetting Instance { get { return instance; } }
+
+
+        //properties
+        public List<string> Blocks { get { return selectedBlocks; } set { selectedBlocks = value as List<string>; } }
+
     }
     #endregion
 }
