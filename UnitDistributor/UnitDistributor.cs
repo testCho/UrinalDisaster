@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using Rhino.Geometry;
 
 namespace UnitDistributor
@@ -136,6 +133,7 @@ namespace UnitDistributor
             //caculate length ratio by Area
             List<double> allocatedLengthPerArea = new List<double>();
 
+            
 
             //caculate max unit count
 
@@ -173,7 +171,7 @@ namespace UnitDistributor
     }
 
 
-    #region DataStructure
+    #region UDDataStructure
 
     //rail
     class CornerRail
@@ -496,14 +494,18 @@ namespace UnitDistributor
     }
 
     public enum CoreTypeL { Stair, Corridor, Tower }
-    #endregion DataStructure
+    #endregion 
 
 
-    #region TempDB
+
+    #region DBDataStructure
     public sealed class BlockSetting
     {
         //field
+        private List<string> allBlocks = new List<string>();
         private List<string> selectedBlocks = new List<string>();
+        private List<int> areaTypes = new List<int>();
+        private List<int> ratio = new List<int>();
 
         //constructor - singleton
         private static readonly BlockSetting instance = new BlockSetting();
@@ -514,13 +516,42 @@ namespace UnitDistributor
         private BlockSetting()
         { }
 
-  
+
         public static BlockSetting Instance { get { return instance; } }
 
 
-        //properties
-        public List<string> Blocks { get { return selectedBlocks; } set { selectedBlocks = value as List<string>; } }
+        //method
+        public string SearchBlock(int area, int bayCount, CoreTypeL coreType)
+        {
+            return "0";
+        }
 
+        //properties
+        public List<string> AllBlocks { get { return allBlocks; }}
+        public List<string> SelectedBlocks{ get { return selectedBlocks; } set { selectedBlocks = value as List<string>; } }
+        public List<int> Ratio { get { return ratio;}  set { ratio = value as List<int>; } }
+
+
+    }
+
+
+    public sealed class CalculationSetting
+    {
+        //field
+
+        //constructor - singleton
+        private static readonly CalculationSetting instance = new CalculationSetting();
+
+        static CalculationSetting()
+        { }
+
+        private CalculationSetting()
+        { }
+
+        public static CalculationSetting Instance { get { return instance; } }
+
+
+        //properties
     }
     #endregion
 }
